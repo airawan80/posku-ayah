@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Buku Kas - POSKU Ayah KAF Tegal</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #FAF9F5;
+  color: #1F1E1D;
+  min-height: 100vh;
+  padding: 20px;
+}
+.container { max-width: 900px; margin: 0 auto; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+.title { font-size: 22px; font-weight: 600; }
+.subtitle { font-size: 14px; color: #6B6B6B; }
+.status { font-size: 12px; color: #6B6B6B; display: flex; align-items: center; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; background: #ccc; }
+.status-dot.ok { background: #1D9E75; }
+.tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.tab { padding: 8px 18px; border-radius: 8px; border: 1px solid #E0DCD0; background: transparent; cursor: pointer; font-size: 14px; color: #6B6B6B; }
+.tab.active { background: #F0EDE3; color: #1F1E1D; font-weight: 500; border-color: #B5AE9C; }
+.card { background: #fff; border: 1px solid #E0DCD0; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+.section-title { font-size: 12px; font-weight: 500; color: #6B6B6B; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.05em; }
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.metric { background: #fff; border: 1px solid #E0DCD0; border-radius: 8px; padding: 14px; }
+.metric-label { font-size: 12px; color: #6B6B6B; margin-bottom: 6px; }
+.metric-value { font-size: 20px; font-weight: 500; }
+.metric-value.green { color: #1D9E75; }
+.metric-value.red { color: #D85A30; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group.full { grid-column: 1 / -1; }
+label { font-size: 13px; color: #6B6B6B; }
+input, select, textarea { width: 100%; padding: 9px 12px; border: 1px solid #E0DCD0; border-radius: 8px; font-size: 14px; background: #fff; color: #1F1E1D; font-family: inherit; }
+textarea { resize: vertical; min-height: 60px; }
+.btn { padding: 9px 16px; border-radius: 8px; border: 1px solid #E0DCD0; background: #fff; cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; font-family: inherit; color: #1F1E1D; }
+.btn-primary { background: #1D9E75; border-color: #1D9E75; color: #fff; font-weight: 500; }
+.btn-sheets { background: #188038; border-color: #188038; color: #fff; font-weight: 500; }
+.btn-danger { background: #D85A30; border-color: #D85A30; color: #fff; }
+.btn-row { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.type-toggle { display: flex; border: 1px solid #E0DCD0; border-radius: 8px; overflow: hidden; }
+.type-btn { flex: 1; padding: 9px; border: none; background: transparent; cursor: pointer; font-size: 14px; color: #6B6B6B; font-family: inherit; }
+.type-btn.active-debet { background: #E1F5EE; color: #0F6E56; font-weight: 500; }
+.type-btn.active-kredit { background: #FAECE7; color: #993C1D; font-weight: 500; }
+.url-row { display: flex; gap: 8px; align-items: center; }
+.url-row input { flex: 1; font-size: 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 8px 10px; font-size: 12px; font-weight: 500; color: #6B6B6B; border-bottom: 1px solid #E0DCD0; }
+td { padding: 9px 10px; border-bottom: 1px solid #F0EDE3; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+.badge-debet { background: #E1F5EE; color: #0F6E56; }
+.badge-kredit { background: #FAECE7; color: #993C1D; }
+.amt-debet { color: #1D9E75; font-weight: 500; }
+.amt-kredit { color: #D85A30; font-weight: 500; }
+.filter-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
+.no-data { text-align: center; padding: 3rem 1rem; color: #6B6B6B; font-size: 14px; }
+.toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity 0.3s; color: #fff; pointer-events: none; z-index: 999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+.info-box { background: #E6F1FB; border-left: 3px solid #378ADD; padding: 12px 14px; border-radius: 0 8px 8px 0; font-size: 13px; color: #0C447C; margin-bottom: 12px; }
+.chart-bar { margin-bottom: 10px; }
+.chart-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.chart-bar-label { font-size: 11px; width: 75px; text-align: right; }
+.chart-bar-track { flex: 1; height: 18px; background: #F0EDE3; border-radius: 4px; overflow: hidden; }
+.chart-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s; }
+.table-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div>
+      <div class="title">Buku Kas Umum</div>
+      <div class="subtitle">POSKU Ayah KAF Tegal</div>
+    </div>
+    <div class="status">
+      <span class="status-dot" id="status-dot"></span><span id="status-text">Belum terhubung</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab" onclick="showTab('setup')">⚙ Pengaturan</button>
+    <button class="tab active" onclick="showTab('input')">+ Input</button>
+    <button class="tab" onclick="showTab('dashboard')">📊 Dashboard</button>
+    <button class="tab" onclick="showTab('riwayat')">📋 Riwayat</button>
+  </div>
+
+  <div id="tab-setup" style="display:none;">
+    <div class="card">
+      <div class="section-title">Hubungkan ke Google Sheets</div>
+      <div class="info-box">
+        💡 Paste URL Apps Script Anda di bawah. URL otomatis tersimpan di browser ini.
+      </div>
+      <div class="form-group">
+        <label>URL Google Apps Script Web App</label>
+        <div class="url-row">
+          <input type="url" id="script-url" placeholder="https://script.google.com/macros/s/.../exec" oninput="saveUrl()" />
+          <button class="btn btn-danger" onclick="clearUrl()" style="padding:9px 12px;">🗑</button>
+        </div>
+      </div>
+      <div id="url-saved" style="font-size:12px; color:#1D9E75; margin-top:8px; display:none;">✓ URL tersimpan di browser</div>
+
+      <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #E0DCD0;">
+        <div class="section-title">Sinkronisasi Data</div>
+        <div class="info-box">
+          📥 Tarik semua transaksi dari Google Sheets (mulai baris 6) ke app ini. Data lokal akan ditimpa.
+        </div>
+        <button class="btn btn-primary" id="btn-sync" onclick="syncFromSheets()">⟳ Sync dari Sheets sekarang</button>
+        <button class="btn btn-danger" onclick="clearAllData()" style="margin-left:8px;">🗑 Hapus semua riwayat</button>
+        <div id="sync-info" style="font-size:12px; color:#6B6B6B; margin-top:8px;"></div>
+      </div>
+
+      <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #E0DCD0;">
+        <div class="section-title">Saldo Awal</div>
+        <div class="form-group" style="max-width: 280px;">
+          <input type="number" id="saldo-awal-input" value="0" oninput="updateSaldoAwal()" />
+        </div>
+        <div style="font-size: 12px; color: #6B6B6B; margin-top: 6px;">Set ke 0 jika baris "Saldo Awal" sudah termasuk dalam sync (default).</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-input">
+    <div class="card">
+      <div class="section-title">Tambah transaksi baru</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Tanggal</label>
+          <input type="date" id="f-tanggal" />
+        </div>
+        <div class="form-group">
+          <label>No. (opsional)</label>
+          <input type="text" id="f-no" placeholder="e.g. 001" />
+        </div>
+        <div class="form-group full">
+          <label>Uraian / Keterangan</label>
+          <textarea id="f-uraian" placeholder="Contoh: Kotak Infaq KBO..."></textarea>
+        </div>
+        <div class="form-group full">
+          <label>Jenis Transaksi</label>
+          <div class="type-toggle">
+            <button class="type-btn active-debet" id="btn-debet" onclick="setType('debet')">↓ Debet (Pemasukan)</button>
+            <button class="type-btn" id="btn-kredit" onclick="setType('kredit')">↑ Kredit (Pengeluaran)</button>
+          </div>
+        </div>
+        <div class="form-group full">
+          <label>Jumlah (Rp)</label>
+          <input type="number" id="f-jumlah" placeholder="0" min="0" />
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-sheets" id="btn-kirim" onclick="saveTransaksi(true)">📤 Simpan + Kirim ke Sheets</button>
+        <button class="btn btn-primary" onclick="saveTransaksi(false)">✓ Simpan di App saja</button>
+        <button class="btn" onclick="resetForm()">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-dashboard" style="display:none;">
+    <div class="metric-grid" id="metrics"></div>
+    <div class="card">
+      <div class="section-title">Arus kas per bulan</div>
+      <div id="bar-chart"></div>
+    </div>
+    <div class="card">
+      <div class="section-title">5 transaksi terakhir</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Tanggal</th><th>Uraian</th><th>Tipe</th><th style="text-align:right">Jumlah (Rp)</th></tr></thead>
+        <tbody id="recent-table"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <div id="tab-riwayat" style="display:none;">
+    <div class="card">
+      <div class="filter-row">
+        <input type="text" id="search" placeholder="Cari uraian..." oninput="renderRiwayat()" style="flex:1; min-width:130px;" />
+        <select id="filter-type" onchange="renderRiwayat()" style="width: auto;">
+          <option value="">Semua</option>
+          <option value="debet">Debet</option>
+          <option value="kredit">Kredit</option>
+        </select>
+        <button class="btn" onclick="exportCSV()">⬇ Export CSV</button>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Tanggal</th><th>No.</th><th>Uraian</th><th>Tipe</th><th style="text-align:right">Debet (Rp)</th><th style="text-align:right">Kredit (Rp)</th><th style="text-align:right">Saldo (Rp)</th><th></th></tr></thead>
+        <tbody id="riwayat-table"></tbody>
+      </table></div>
+      <div id="riwayat-empty" class="no-data" style="display:none;">Belum ada transaksi</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let data = JSON.parse(localStorage.getItem('bku_data') || '[]');
+let txType = 'debet';
+let SALDO_AWAL = parseFloat(localStorage.getItem('bku_saldo_awal'));
+if (isNaN(SALDO_AWAL)) SALDO_AWAL = 0;
+let scriptUrl = localStorage.getItem('bku_script_url') || '';
+
+function fmt(n) { return Math.round(n).toLocaleString('id-ID'); }
+function fmtShort(n) {
+  if (Math.abs(n) >= 1000000) return 'Rp ' + (n/1000000).toFixed(1) + ' jt';
+  if (Math.abs(n) >= 1000) return 'Rp ' + (n/1000).toFixed(0) + ' rb';
+  return 'Rp ' + n;
+}
+
+function saveData() { localStorage.setItem('bku_data', JSON.stringify(data)); }
+
+function saveUrl() {
+  const v = document.getElementById('script-url').value.trim();
+  scriptUrl = v;
+  localStorage.setItem('bku_script_url', v);
+  document.getElementById('url-saved').style.display = v ? 'block' : 'none';
+  updateSheetStatus();
+}
+
+function clearUrl() {
+  document.getElementById('script-url').value = '';
+  scriptUrl = '';
+  localStorage.removeItem('bku_script_url');
+  document.getElementById('url-saved').style.display = 'none';
+  updateSheetStatus();
+  showToast('URL dihapus', '#D85A30');
+}
+
+function updateSaldoAwal() {
+  SALDO_AWAL = parseFloat(document.getElementById('saldo-awal-input').value) || 0;
+  localStorage.setItem('bku_saldo_awal', SALDO_AWAL.toString());
+  renderDashboard();
+}
+
+function updateSheetStatus() {
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-text');
+  if (scriptUrl && scriptUrl.includes('script.google.com')) {
+    dot.className = 'status-dot ok';
+    txt.textContent = 'Sheets terhubung';
+  } else {
+    dot.className = 'status-dot';
+    txt.textContent = 'Belum terhubung';
+  }
+}
+
+function showTab(name) {
+  ['dashboard','input','riwayat','setup'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t === name ? 'block' : 'none';
+  });
+  const order = ['setup','input','dashboard','riwayat'];
+  document.querySelectorAll('.tab').forEach((el, i) => {
+    el.classList.toggle('active', order[i] === name);
+  });
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'riwayat') renderRiwayat();
+}
+
+function setType(type) {
+  txType = type;
+  document.getElementById('btn-debet').className = 'type-btn' + (type === 'debet' ? ' active-debet' : '');
+  document.getElementById('btn-kredit').className = 'type-btn' + (type === 'kredit' ? ' active-kredit' : '');
+}
+
+async function saveTransaksi(sendToSheets) {
+  const tanggal = document.getElementById('f-tanggal').value;
+  const no = document.getElementById('f-no').value.trim();
+  const uraian = document.getElementById('f-uraian').value.trim();
+  const jumlah = parseFloat(document.getElementById('f-jumlah').value);
+  if (!tanggal) { showToast('Isi tanggal dulu!', '#D85A30'); return; }
+  if (!uraian) { showToast('Uraian tidak boleh kosong', '#D85A30'); return; }
+  if (!jumlah || jumlah <= 0) { showToast('Jumlah harus lebih dari 0', '#D85A30'); return; }
+
+  if (sendToSheets && (!scriptUrl || !scriptUrl.includes('script.google.com'))) {
+    showToast('Isi URL di tab Pengaturan dulu!', '#D85A30');
+    showTab('setup'); return;
+  }
+
+  data.push({ id: Date.now(), tanggal, no, uraian, type: txType, jumlah });
+  data.sort((a,b) => a.tanggal.localeCompare(b.tanggal));
+  saveData();
+
+  if (sendToSheets) {
+    const btn = document.getElementById('btn-kirim');
+    btn.innerHTML = '⏳ Mengirim...';
+    btn.disabled = true;
+    try {
+      await fetch(scriptUrl, {
+        method: 'POST',
+        body: JSON.stringify({ tanggal, no, uraian, type: txType, jumlah }),
+        mode: 'no-cors'
+      });
+      showToast('✓ Terkirim! Cek sheet BKU di Google Sheets', '#188038');
+    } catch(e) {
+      showToast('Gagal kirim ke Sheets: ' + e.message, '#D85A30');
+    }
+    btn.innerHTML = '📤 Simpan + Kirim ke Sheets';
+    btn.disabled = false;
+  } else {
+    showToast('✓ Tersimpan di app!', '#1D9E75');
+  }
+  resetForm();
+}
+
+function resetForm() {
+  document.getElementById('f-tanggal').value = new Date().toISOString().slice(0,10);
+  document.getElementById('f-no').value = '';
+  document.getElementById('f-uraian').value = '';
+  document.getElementById('f-jumlah').value = '';
+  setType('debet');
+}
+
+function deleteRow(id) {
+  if (!confirm('Hapus transaksi ini?')) return;
+  data = data.filter(d => d.id !== id);
+  saveData();
+  renderRiwayat(); renderDashboard();
+}
+
+function getSaldo() {
+  let s = SALDO_AWAL;
+  return data.map(d => { s += d.type === 'debet' ? d.jumlah : -d.jumlah; return { ...d, saldo: s }; });
+}
+
+function renderDashboard() {
+  const totalDebet = data.filter(d => d.type === 'debet').reduce((a,b) => a+b.jumlah, 0);
+  const totalKredit = data.filter(d => d.type === 'kredit').reduce((a,b) => a+b.jumlah, 0);
+  const saldo = SALDO_AWAL + totalDebet - totalKredit;
+  document.getElementById('metrics').innerHTML = `
+    <div class="metric"><div class="metric-label">💰 Saldo saat ini</div><div class="metric-value ${saldo >= 0 ? 'green' : 'red'}">${fmtShort(saldo)}</div></div>
+    <div class="metric"><div class="metric-label">↓ Total pemasukan</div><div class="metric-value green">${fmtShort(SALDO_AWAL + totalDebet)}</div></div>
+    <div class="metric"><div class="metric-label">↑ Total pengeluaran</div><div class="metric-value red">${fmtShort(totalKredit)}</div></div>
+    <div class="metric"><div class="metric-label">📄 Jumlah transaksi</div><div class="metric-value">${data.length}</div></div>`;
+
+  const byMonth = {};
+  data.forEach(d => { const m = d.tanggal.slice(0,7); if (!byMonth[m]) byMonth[m] = { debet:0, kredit:0 }; byMonth[m][d.type] += d.jumlah; });
+  const months = Object.keys(byMonth).sort().slice(-6);
+  const maxVal = Math.max(...months.map(m => Math.max(byMonth[m].debet, byMonth[m].kredit)), 1);
+  const mNames = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  let barHtml = months.length === 0 ? '<div class="no-data" style="padding:1.5rem 0; font-size:13px;">Belum ada data</div>'
+    : months.map(m => {
+        const lbl = mNames[parseInt(m.slice(5))-1] + ' ' + m.slice(2,4);
+        const dPct = Math.round((byMonth[m].debet/maxVal)*100);
+        const kPct = Math.round((byMonth[m].kredit/maxVal)*100);
+        return `<div class="chart-bar">
+          <div style="font-size:11px;color:#6B6B6B;margin-bottom:3px;">${lbl}</div>
+          <div class="chart-bar-row"><div class="chart-bar-label" style="color:#0F6E56">${fmtShort(byMonth[m].debet)}</div><div class="chart-bar-track"><div class="chart-bar-fill" style="width:${dPct}%;background:#1D9E75;"></div></div></div>
+          <div class="chart-bar-row"><div class="chart-bar-label" style="color:#993C1D">${fmtShort(byMonth[m].kredit)}</div><div class="chart-bar-track"><div class="chart-bar-fill" style="width:${kPct}%;background:#D85A30;"></div></div></div>
+        </div>`;}).join('');
+  document.getElementById('bar-chart').innerHTML = barHtml;
+
+  const rows = getSaldo();
+  const recent = rows.slice(-5).reverse();
+  document.getElementById('recent-table').innerHTML = recent.length === 0
+    ? '<tr><td colspan="4" style="text-align:center;padding:1.5rem;color:#6B6B6B;font-size:13px;">Belum ada transaksi</td></tr>'
+    : recent.map(d => `<tr><td>${d.tanggal}</td><td style="max-width:200px">${d.uraian}</td><td><span class="badge badge-${d.type}">${d.type==='debet'?'Debet':'Kredit'}</span></td><td style="text-align:right" class="amt-${d.type}">${fmt(d.jumlah)}</td></tr>`).join('');
+}
+
+function renderRiwayat() {
+  const search = (document.getElementById('search')?.value||'').toLowerCase();
+  const filterType = document.getElementById('filter-type')?.value||'';
+  const rows = getSaldo().filter(d => d.uraian.toLowerCase().includes(search) && (!filterType || d.type===filterType));
+  const tbody = document.getElementById('riwayat-table');
+  const empty = document.getElementById('riwayat-empty');
+  if (rows.length===0) { tbody.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  tbody.innerHTML = rows.map(d => `<tr>
+    <td style="white-space:nowrap">${d.tanggal}</td><td>${d.no}</td><td>${d.uraian}</td>
+    <td><span class="badge badge-${d.type}">${d.type==='debet'?'Debet':'Kredit'}</span></td>
+    <td style="text-align:right" class="amt-debet">${d.type==='debet'?fmt(d.jumlah):''}</td>
+    <td style="text-align:right" class="amt-kredit">${d.type==='kredit'?fmt(d.jumlah):''}</td>
+    <td style="text-align:right;white-space:nowrap">${fmt(d.saldo)}</td>
+    <td><button class="btn btn-danger" style="padding:4px 8px;font-size:12px;" onclick="deleteRow(${d.id})">🗑</button></td>
+  </tr>`).join('');
+}
+
+function clearAllData() {
+  if (!confirm(`Hapus SEMUA ${data.length} transaksi dari app ini? Data di Google Sheets tidak terpengaruh.`)) return;
+  if (!confirm('Yakin? Aksi ini tidak bisa di-undo.')) return;
+  data = [];
+  saveData();
+  document.getElementById('sync-info').textContent = '';
+  renderDashboard(); renderRiwayat();
+  showToast('Semua riwayat dihapus dari app', '#D85A30');
+}
+
+async function syncFromSheets() {
+  if (!scriptUrl || !scriptUrl.includes('script.google.com')) {
+    showToast('Isi URL Apps Script dulu!', '#D85A30'); return;
+  }
+  const btn = document.getElementById('btn-sync');
+  const info = document.getElementById('sync-info');
+  btn.disabled = true; btn.innerHTML = '⏳ Mengambil data...';
+  info.textContent = '';
+  try {
+    const res = await fetch(scriptUrl + (scriptUrl.includes('?') ? '&' : '?') + 'action=list&t=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    if (!Array.isArray(json.rows)) throw new Error('Format respons tidak sesuai');
+    data = json.rows.map((r, i) => ({
+      id: Date.now() + i,
+      tanggal: r.tanggal,
+      no: r.no || '',
+      uraian: r.uraian || '',
+      type: r.type,
+      jumlah: Number(r.jumlah) || 0
+    })).filter(d => d.tanggal && d.jumlah > 0 && (d.type === 'debet' || d.type === 'kredit'));
+    data.sort((a,b) => a.tanggal.localeCompare(b.tanggal));
+    saveData();
+    info.innerHTML = `✓ ${data.length} transaksi dimuat (${new Date().toLocaleTimeString('id-ID')})`;
+    info.style.color = '#1D9E75';
+    showToast(`✓ Sync OK: ${data.length} transaksi`, '#188038');
+    renderDashboard(); renderRiwayat();
+  } catch(e) {
+    info.textContent = '✗ Gagal: ' + e.message;
+    info.style.color = '#D85A30';
+    showToast('Sync gagal: ' + e.message, '#D85A30');
+  }
+  btn.disabled = false; btn.innerHTML = '⟳ Sync dari Sheets sekarang';
+}
+
+function exportCSV() {
+  const rows = getSaldo();
+  const lines = rows.map(d => [d.tanggal,d.no,'"'+d.uraian+'"',d.type,d.type==='debet'?d.jumlah:'',d.type==='kredit'?d.jumlah:'',d.saldo].join(','));
+  const csv = ['Tanggal,No,Uraian,Tipe,Debet,Kredit,Saldo', ...lines].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = 'buku_kas_posku.csv';
+  a.click();
+  showToast('CSV diunduh!', '#1D9E75');
+}
+
+function showToast(msg, color) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = color||'#1D9E75';
+  t.style.opacity = '1';
+  setTimeout(() => t.style.opacity='0', 3500);
+}
+
+// Init
+document.getElementById('f-tanggal').value = new Date().toISOString().slice(0,10);
+document.getElementById('script-url').value = scriptUrl;
+document.getElementById('saldo-awal-input').value = SALDO_AWAL;
+if (scriptUrl) document.getElementById('url-saved').style.display = 'block';
+updateSheetStatus();
+</script>
+</body>
+</html>
