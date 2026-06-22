@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Buku Kas - POSKU Ayah KAF Tegal</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -66,6 +67,39 @@ td { padding: 9px 10px; border-bottom: 1px solid #F0EDE3; }
 .chart-bar-track { flex: 1; height: 18px; background: #F0EDE3; border-radius: 4px; overflow: hidden; }
 .chart-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s; }
 .table-wrap { overflow-x: auto; }
+
+/* Warn box & blue button */
+.warn-box { background: #FFF6E6; border-left: 3px solid #E89B2C; padding: 12px 14px; border-radius: 0 8px 8px 0; font-size: 13px; color: #6B4A11; margin-bottom: 12px; }
+.btn-blue { background: #378ADD; border-color: #378ADD; color: #fff; font-weight: 500; }
+
+/* Laporan: transaction grouping list */
+.tx-item { display: grid; grid-template-columns: 90px 1fr 110px 180px 32px; gap: 10px; align-items: center; padding: 8px 10px; border-bottom: 1px solid #F0EDE3; font-size: 13px; }
+.tx-item:last-child { border-bottom: none; }
+.tx-item input, .tx-item select { padding: 6px 8px; font-size: 12px; }
+.cat-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.cat-chip { padding: 4px 10px; background: #F0EDE3; border-radius: 16px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; }
+.cat-chip button { border: none; background: none; cursor: pointer; color: #6B6B6B; font-size: 14px; padding: 0; line-height: 1; }
+
+/* Report preview (styled like the WA report image) */
+.report-preview { background: #fff; padding: 24px; border-radius: 12px; border: 1px solid #E0DCD0; }
+.report-title { text-align: center; font-weight: bold; font-size: 16px; line-height: 1.5; margin-bottom: 20px; color: #1F1E1D; }
+.report-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; border: 2px solid #5B9BD5; }
+.report-table.expense { border-color: #ED7D31; }
+.report-table.saldo-final { border-color: #70AD47; }
+.report-table th { background: #5B9BD5; color: #fff; padding: 8px 12px; font-size: 13px; text-align: left; font-weight: bold; border: 1px solid #4A87BC; }
+.report-table.expense th { background: #ED7D31; border-color: #C66722; }
+.report-table.saldo-final th { background: #70AD47; border-color: #5C9239; }
+.report-table th.num, .report-table td.num { text-align: right; }
+.report-table th.no, .report-table td.no { text-align: center; width: 50px; }
+.report-table td { padding: 7px 12px; font-size: 13px; border: 1px solid #DEEBF7; }
+.report-table.expense td { border-color: #FCE4D6; }
+.report-table.saldo-final td { border-color: #E2EFDA; }
+.report-table tr:nth-child(even) td { background: #F4F8FC; }
+.report-table.expense tr:nth-child(even) td { background: #FBE5D6; }
+.report-table tr.total td { font-weight: bold; background: #fff !important; }
+.report-table.expense tr.subheader td { font-weight: bold; }
+.report-table.saldo-final td { background: #E2EFDA !important; font-weight: bold; font-size: 14px; }
+.report-table td.indent { padding-left: 28px; }
 </style>
 </head>
 <body>
@@ -85,6 +119,7 @@ td { padding: 9px 10px; border-bottom: 1px solid #F0EDE3; }
     <button class="tab active" onclick="showTab('input')">+ Input</button>
     <button class="tab" onclick="showTab('dashboard')">📊 Dashboard</button>
     <button class="tab" onclick="showTab('riwayat')">📋 Riwayat</button>
+    <button class="tab" onclick="showTab('laporan')">📄 Laporan Global</button>
   </div>
 
   <div id="tab-setup" style="display:none;">
@@ -191,6 +226,74 @@ td { padding: 9px 10px; border-bottom: 1px solid #F0EDE3; }
       <div id="riwayat-empty" class="no-data" style="display:none;">Belum ada transaksi</div>
     </div>
   </div>
+
+  <div id="tab-laporan" style="display:none;">
+    <div class="card">
+      <div class="section-title">Setup Laporan Global</div>
+      <div class="info-box">📝 Pilih periode, atur saldo awal, kelompokkan transaksi ke kategori, lalu generate laporan untuk WA.</div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Judul Periode</label>
+          <input type="text" id="rep-periode" placeholder="JULI 2025 - JANUARI 2026" />
+        </div>
+        <div class="form-group">
+          <label>Saldo Periode Lalu (Rp)</label>
+          <input type="number" id="rep-saldo-lalu" value="0" />
+        </div>
+        <div class="form-group">
+          <label>Tanggal Mulai</label>
+          <input type="date" id="rep-tgl-mulai" onchange="loadLaporanTx()" />
+        </div>
+        <div class="form-group">
+          <label>Tanggal Akhir</label>
+          <input type="date" id="rep-tgl-akhir" onchange="loadLaporanTx()" />
+        </div>
+      </div>
+
+      <div style="margin-top:20px;">
+        <div class="section-title">Kategori untuk Laporan</div>
+        <div style="font-size:12px; color:#6B6B6B; margin-bottom:10px;">Kategori tersimpan otomatis dan bisa dipakai untuk laporan berikutnya.</div>
+
+        <div style="font-size:13px; font-weight:500; margin-bottom:6px; color:#0C447C;">📥 Kategori Penerimaan:</div>
+        <div class="cat-list" id="cat-list-in"></div>
+        <div style="display:flex; gap:6px; margin-bottom:14px;">
+          <input type="text" id="new-cat-in" placeholder="e.g. Kotak Infak KBO Ayah" style="flex:1;" />
+          <button class="btn" onclick="addCat('in')">+ Tambah</button>
+        </div>
+
+        <div style="font-size:13px; font-weight:500; margin-bottom:6px; color:#6B4A11;">📤 Kategori Pengeluaran (pakai "::" untuk sub-kategori, mis. "Kegiatan POSKU::Konsumsi"):</div>
+        <div class="cat-list" id="cat-list-out"></div>
+        <div style="display:flex; gap:6px;">
+          <input type="text" id="new-cat-out" placeholder="e.g. Kegiatan POSKU::Konsumsi" style="flex:1;" />
+          <button class="btn" onclick="addCat('out')">+ Tambah</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Kelompokkan Transaksi</div>
+      <div id="laporan-warn"></div>
+      <div class="table-wrap"><div id="laporan-tx-list"></div></div>
+    </div>
+
+    <div class="btn-row" style="margin-bottom:20px;">
+      <button class="btn btn-primary" onclick="generateReport()">📄 Generate Laporan</button>
+    </div>
+
+    <div class="card" id="laporan-preview-card" style="display:none;">
+      <div class="section-title" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <span>Preview Laporan</span>
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-blue" onclick="downloadReportPNG()">🖼 Download PNG</button>
+          <button class="btn" onclick="copyReportText()">📋 Copy untuk WA</button>
+        </div>
+      </div>
+      <div id="report-preview-area" style="overflow-x:auto;">
+        <div class="report-preview" id="report-preview"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -201,6 +304,24 @@ let txType = 'debet';
 let SALDO_AWAL = parseFloat(localStorage.getItem('bku_saldo_awal'));
 if (isNaN(SALDO_AWAL)) SALDO_AWAL = 0;
 let scriptUrl = localStorage.getItem('bku_script_url') || '';
+
+// State untuk Laporan Global
+let catIn = JSON.parse(localStorage.getItem('bku_cat_in') || JSON.stringify([
+  'Kotak Infak KBO Ayah','Kotak Infak KBO Bunda',
+  'Kotak Infak KBO Kuttab Awal 1&2','Infak KBO via QRIS','Infak Harian via QRIS'
+]));
+let catOut = JSON.parse(localStorage.getItem('bku_cat_out') || JSON.stringify([
+  'Kegiatan Kajian Bulanan Orang Tua::KBO Spesial',
+  'Kegiatan Kajian Bulanan Orang Tua::Infak ke Masjid ICB',
+  'Kegiatan Santri::Taawun DAHAM',
+  'Kegiatan Santri::Taawun PARTAS',
+  'Kegiatan POSKU::Kegiatan sosial',
+  'Kegiatan POSKU::Perlengkapan',
+  'Kegiatan POSKU::Konsumsi'
+]));
+let txAssignments = JSON.parse(localStorage.getItem('bku_tx_assignments') || '{}');
+
+function fmtRp(n) { return 'Rp ' + Math.round(n).toLocaleString('id-ID'); }
 
 function fmt(n) { return Math.round(n).toLocaleString('id-ID'); }
 function fmtShort(n) {
@@ -247,15 +368,16 @@ function updateSheetStatus() {
 }
 
 function showTab(name) {
-  ['dashboard','input','riwayat','setup'].forEach(t => {
+  ['dashboard','input','riwayat','setup','laporan'].forEach(t => {
     document.getElementById('tab-'+t).style.display = t === name ? 'block' : 'none';
   });
-  const order = ['setup','input','dashboard','riwayat'];
+  const order = ['setup','input','dashboard','riwayat','laporan'];
   document.querySelectorAll('.tab').forEach((el, i) => {
     el.classList.toggle('active', order[i] === name);
   });
   if (name === 'dashboard') renderDashboard();
   if (name === 'riwayat') renderRiwayat();
+  if (name === 'laporan') { renderCats(); loadLaporanTx(); }
 }
 
 function setType(type) {
@@ -438,6 +560,244 @@ function showToast(msg, color) {
   t.style.background = color||'#1D9E75';
   t.style.opacity = '1';
   setTimeout(() => t.style.opacity='0', 3500);
+}
+
+// ===== LAPORAN GLOBAL =====
+function saveCats() {
+  localStorage.setItem('bku_cat_in', JSON.stringify(catIn));
+  localStorage.setItem('bku_cat_out', JSON.stringify(catOut));
+}
+function saveAssignments() {
+  localStorage.setItem('bku_tx_assignments', JSON.stringify(txAssignments));
+}
+
+function renderCats() {
+  document.getElementById('cat-list-in').innerHTML = catIn.map((c,i) =>
+    `<span class="cat-chip">${c} <button onclick="removeCat('in',${i})">×</button></span>`).join('') || '<span style="color:#6B6B6B;font-size:12px;">Belum ada kategori</span>';
+  document.getElementById('cat-list-out').innerHTML = catOut.map((c,i) =>
+    `<span class="cat-chip">${c} <button onclick="removeCat('out',${i})">×</button></span>`).join('') || '<span style="color:#6B6B6B;font-size:12px;">Belum ada kategori</span>';
+}
+
+function addCat(type) {
+  const input = document.getElementById(type === 'in' ? 'new-cat-in' : 'new-cat-out');
+  const v = input.value.trim();
+  if (!v) return;
+  if (type === 'in') catIn.push(v); else catOut.push(v);
+  saveCats(); renderCats(); input.value = ''; renderLaporanTx();
+}
+
+function removeCat(type, idx) {
+  if (type === 'in') catIn.splice(idx, 1); else catOut.splice(idx, 1);
+  saveCats(); renderCats(); renderLaporanTx();
+}
+
+function loadLaporanTx() {
+  const start = document.getElementById('rep-tgl-mulai').value;
+  const end = document.getElementById('rep-tgl-akhir').value;
+  if (!start || !end) {
+    document.getElementById('laporan-tx-list').innerHTML = '<div class="no-data" style="padding:1.5rem 0;">Pilih periode tanggal dulu</div>';
+    return;
+  }
+  renderLaporanTx();
+}
+
+function renderLaporanTx() {
+  const start = document.getElementById('rep-tgl-mulai').value;
+  const end = document.getElementById('rep-tgl-akhir').value;
+  if (!start || !end) return;
+  const filtered = data.filter(d => d.tanggal >= start && d.tanggal <= end);
+  if (filtered.length === 0) {
+    document.getElementById('laporan-tx-list').innerHTML = '<div class="no-data" style="padding:1.5rem 0;">Tidak ada transaksi di periode ini</div>';
+    return;
+  }
+  const html = filtered.map(d => {
+    const cats = d.type === 'debet' ? catIn : catOut;
+    const assigned = txAssignments[d.id] || '';
+    return `<div class="tx-item">
+      <div style="font-size:11px;color:#6B6B6B;">${d.tanggal}</div>
+      <div style="font-size:12px;">${d.uraian}</div>
+      <div class="amt-${d.type}" style="font-size:12px; text-align:right;">${d.type==='debet'?'+':''}${fmtRp(d.jumlah)}</div>
+      <select onchange="setAssign(${d.id}, this.value)" style="font-size:12px;">
+        <option value="">— pilih kategori —</option>
+        ${cats.map(c => `<option value="${c}" ${assigned===c?'selected':''}>${c}</option>`).join('')}
+      </select>
+      <span style="font-size:10px;color:#6B6B6B;">${d.type==='debet'?'IN':'OUT'}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('laporan-tx-list').innerHTML = html;
+}
+
+function setAssign(id, val) {
+  if (val) txAssignments[id] = val;
+  else delete txAssignments[id];
+  saveAssignments();
+}
+
+function generateReport() {
+  const periode = document.getElementById('rep-periode').value.trim() || 'PERIODE';
+  const saldoLalu = parseFloat(document.getElementById('rep-saldo-lalu').value) || 0;
+  const start = document.getElementById('rep-tgl-mulai').value;
+  const end = document.getElementById('rep-tgl-akhir').value;
+  if (!start || !end) { showToast('Pilih periode dulu', '#D85A30'); return; }
+
+  const filtered = data.filter(d => d.tanggal >= start && d.tanggal <= end);
+  const unassigned = filtered.filter(d => !txAssignments[d.id]);
+  let warnHtml = '';
+  if (unassigned.length > 0) {
+    warnHtml = `<div class="warn-box">⚠ ${unassigned.length} transaksi belum dikategorikan dan tidak akan muncul di laporan. Scroll ke atas untuk mengkategorikan.</div>`;
+  }
+  document.getElementById('laporan-warn').innerHTML = warnHtml;
+
+  // Aggregate IN per kategori (urutan sesuai catIn)
+  const inGroups = {};
+  catIn.forEach(c => inGroups[c] = 0);
+  filtered.filter(d => d.type === 'debet' && txAssignments[d.id]).forEach(d => {
+    inGroups[txAssignments[d.id]] = (inGroups[txAssignments[d.id]] || 0) + d.jumlah;
+  });
+
+  // Aggregate OUT (parent → children)
+  const outGroups = {};
+  const outOrder = [];
+  catOut.forEach(c => {
+    const parts = c.split('::');
+    const parent = parts[0];
+    if (!outGroups[parent]) { outGroups[parent] = { _direct: 0, children: {}, childOrder: [] }; outOrder.push(parent); }
+    if (parts.length > 1) {
+      outGroups[parent].children[parts[1]] = 0;
+      outGroups[parent].childOrder.push(parts[1]);
+    }
+  });
+  filtered.filter(d => d.type === 'kredit' && txAssignments[d.id]).forEach(d => {
+    const parts = txAssignments[d.id].split('::');
+    if (parts.length === 1) {
+      if (!outGroups[parts[0]]) { outGroups[parts[0]] = { _direct: 0, children: {}, childOrder: [] }; outOrder.push(parts[0]); }
+      outGroups[parts[0]]._direct += d.jumlah;
+    } else {
+      outGroups[parts[0]].children[parts[1]] = (outGroups[parts[0]].children[parts[1]] || 0) + d.jumlah;
+    }
+  });
+
+  // Build IN rows
+  let inRows = '';
+  let no = 1;
+  inRows += `<tr><td class="no">${no++}</td><td><b>Saldo Periode Lalu</b></td><td class="num"><b>${fmt(saldoLalu)}</b></td></tr>`;
+  let totalIn = saldoLalu;
+  catIn.forEach(c => {
+    if ((inGroups[c]||0) > 0) {
+      inRows += `<tr><td class="no">${no++}</td><td>${c}</td><td class="num">${fmt(inGroups[c])}</td></tr>`;
+      totalIn += inGroups[c];
+    }
+  });
+  inRows += `<tr class="total"><td></td><td><b>TOTAL PENERIMAAN</b></td><td class="num"><b>${fmt(totalIn)}</b></td></tr>`;
+
+  // Build OUT rows
+  let outRows = '';
+  let outNo = 1;
+  let totalOut = 0;
+  outOrder.forEach(parent => {
+    const g = outGroups[parent];
+    const hasData = g._direct > 0 || Object.values(g.children).some(v => v > 0);
+    if (!hasData) return;
+    outRows += `<tr class="subheader"><td class="no">${outNo++}</td><td colspan="2"><b>${parent}</b></td></tr>`;
+    g.childOrder.forEach(child => {
+      const val = g.children[child];
+      if (val > 0) {
+        outRows += `<tr><td></td><td class="indent">• ${child}</td><td class="num">${fmt(val)}</td></tr>`;
+        totalOut += val;
+      }
+    });
+    if (g._direct > 0) {
+      outRows += `<tr><td></td><td class="indent">• (Lainnya)</td><td class="num">${fmt(g._direct)}</td></tr>`;
+      totalOut += g._direct;
+    }
+  });
+  outRows += `<tr class="total"><td></td><td><b>TOTAL PENGELUARAN</b></td><td class="num"><b>${fmt(totalOut)}</b></td></tr>`;
+
+  const saldoAkhir = totalIn - totalOut;
+  const periodeAkhirLabel = periode.includes('-') ? periode.split('-').pop().trim() : periode;
+
+  const html = `
+    <div class="report-title">LAPORAN KEUANGAN<br>POSKU AYAH KAF TEGAL<br>${periode}</div>
+    <table class="report-table">
+      <thead><tr><th class="no">NO</th><th>PENERIMAAN</th><th class="num">JUMLAH</th></tr></thead>
+      <tbody>${inRows}</tbody>
+    </table>
+    <table class="report-table expense">
+      <thead><tr><th class="no">NO</th><th>PENGELUARAN</th><th class="num">JUMLAH</th></tr></thead>
+      <tbody>${outRows}</tbody>
+    </table>
+    <table class="report-table saldo-final">
+      <tbody><tr><td><b>SALDO ${periodeAkhirLabel.toUpperCase()}</b></td><td class="num"><b>${fmt(saldoAkhir)}</b></td></tr></tbody>
+    </table>
+  `;
+  document.getElementById('report-preview').innerHTML = html;
+  document.getElementById('laporan-preview-card').style.display = 'block';
+  document.getElementById('laporan-preview-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function downloadReportPNG() {
+  const el = document.getElementById('report-preview');
+  html2canvas(el, { backgroundColor: '#ffffff', scale: 2 }).then(canvas => {
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = 'laporan_posku_' + new Date().toISOString().slice(0,10) + '.png';
+    a.click();
+    showToast('Laporan PNG diunduh!', '#1D9E75');
+  });
+}
+
+function copyReportText() {
+  const periode = document.getElementById('rep-periode').value.trim() || 'PERIODE';
+  const saldoLalu = parseFloat(document.getElementById('rep-saldo-lalu').value) || 0;
+  const start = document.getElementById('rep-tgl-mulai').value;
+  const end = document.getElementById('rep-tgl-akhir').value;
+  const filtered = data.filter(d => d.tanggal >= start && d.tanggal <= end);
+
+  const inGroups = {};
+  filtered.filter(d => d.type === 'debet' && txAssignments[d.id]).forEach(d => {
+    inGroups[txAssignments[d.id]] = (inGroups[txAssignments[d.id]] || 0) + d.jumlah;
+  });
+  const outGroups = {};
+  const outOrder = [];
+  catOut.forEach(c => {
+    const parts = c.split('::');
+    if (!outGroups[parts[0]]) { outGroups[parts[0]] = { _direct: 0, children: {}, childOrder: [] }; outOrder.push(parts[0]); }
+    if (parts.length > 1) { outGroups[parts[0]].children[parts[1]] = 0; outGroups[parts[0]].childOrder.push(parts[1]); }
+  });
+  filtered.filter(d => d.type === 'kredit' && txAssignments[d.id]).forEach(d => {
+    const parts = txAssignments[d.id].split('::');
+    if (parts.length === 1) {
+      if (!outGroups[parts[0]]) { outGroups[parts[0]] = { _direct:0, children:{}, childOrder:[] }; outOrder.push(parts[0]); }
+      outGroups[parts[0]]._direct += d.jumlah;
+    } else outGroups[parts[0]].children[parts[1]] = (outGroups[parts[0]].children[parts[1]] || 0) + d.jumlah;
+  });
+
+  let txt = `*LAPORAN KEUANGAN*\n*POSKU AYAH KAF TEGAL*\n*${periode}*\n\n`;
+  txt += `📥 *PENERIMAAN*\n`;
+  txt += `• Saldo Periode Lalu: ${fmtRp(saldoLalu)}\n`;
+  let totalIn = saldoLalu;
+  catIn.forEach(c => {
+    if ((inGroups[c]||0) > 0) { txt += `• ${c}: ${fmtRp(inGroups[c])}\n`; totalIn += inGroups[c]; }
+  });
+  txt += `*TOTAL PENERIMAAN: ${fmtRp(totalIn)}*\n\n`;
+  txt += `📤 *PENGELUARAN*\n`;
+  let totalOut = 0;
+  outOrder.forEach(parent => {
+    const g = outGroups[parent];
+    const hasData = g._direct > 0 || Object.values(g.children).some(v => v > 0);
+    if (!hasData) return;
+    txt += `\n_${parent}_\n`;
+    g.childOrder.forEach(child => {
+      const val = g.children[child];
+      if (val > 0) { txt += `  • ${child}: ${fmtRp(val)}\n`; totalOut += val; }
+    });
+    if (g._direct > 0) { txt += `  • (Lainnya): ${fmtRp(g._direct)}\n`; totalOut += g._direct; }
+  });
+  txt += `\n*TOTAL PENGELUARAN: ${fmtRp(totalOut)}*\n\n`;
+  const periodeAkhirLabel = periode.includes('-') ? periode.split('-').pop().trim() : periode;
+  txt += `💰 *SALDO ${periodeAkhirLabel.toUpperCase()}: ${fmtRp(totalIn - totalOut)}*`;
+
+  navigator.clipboard.writeText(txt).then(() => showToast('Teks disalin! Tinggal paste di WA', '#1D9E75'));
 }
 
 // Init
